@@ -1,0 +1,33 @@
+import os
+from groq import Groq
+from dotenv import load_dotenv
+import re
+def initialize():
+    """Load the environement """
+    load_dotenv()
+    api_key=os.environ.get("GROQ_API_KEY")
+    return api_key
+
+client = Groq(
+    api_key=initialize()
+)
+with open("input.csv","rt") as text:
+    query=text.read()
+
+pattern = r'\{.*?"ID":\s*\d+,\s*"problem":\s*".*?",\s*"solution":\s*".*?"\s*\}'
+chat_content=str(f"Given these problems, classify each problem by the required category of ai tools needed and return them in a json format following this pattern {pattern}:{query}")
+chat_completion = client.chat.completions.create(
+    messages=[
+        {
+            "role": "user",
+            "content":chat_content ,
+        }
+    ],
+    model="deepseek-r1-distill-llama-70b",
+)
+
+print(chat_completion.choices[0].message.content)
+
+text=str(chat_completion.choices[0].message.content)
+parsed_text=re.findall(pattern,text)
+print("The final outputed json is : ", parsed_text)
